@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz Pro UI</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:linear-gradient(135deg,#141e30,#243b55);display:flex;align-items:center;justify-content:center;height:100vh;color:#fff}
+.card{width:380px;background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:20px;padding:25px;box-shadow:0 20px 50px rgba(0,0,0,0.4);text-align:center}
+h2{margin-bottom:5px}
+.subtitle{font-size:13px;color:#ccc;margin-bottom:15px}
+input{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:none;background:rgba(255,255,255,0.15);color:#fff}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0072ff);color:white;font-weight:600;cursor:pointer}
+.hidden{display:none}
+.option{background:rgba(255,255,255,0.15);margin:6px 0;padding:10px;border-radius:10px;cursor:pointer}
+.option:hover{background:#00c6ff}
+.error{color:#ff6b6b;font-size:13px;text-align:left}
+#leaderboard{margin-top:15px;text-align:left;font-size:14px;max-height:150px;overflow:auto}
+.toggle{font-size:12px;color:#00c6ff;cursor:pointer;text-align:right}
+.logout{background:#ff4d4d;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="card" id="loginPage">
+<h2>Welcome 👋</h2>
+<div class="subtitle">Login to continue your quiz</div>
+<input id="loginUsername" placeholder="Enter Username">
+<input id="loginPassword" type="password" placeholder="Enter Password">
+<div class="toggle" onclick="togglePassword('loginPassword')">Show/Hide Password</div>
+<div class="error" id="loginError"></div>
+<button onclick="login()">Login</button>
+<p onclick="showRegister()" style="cursor:pointer;color:#00c6ff">Don't have an account? Register</p>
+</div>
+
+<div class="card hidden" id="registerPage">
+<h2>Create Account</h2>
+<div class="subtitle">Join the quiz competition</div>
+<input id="regUsername" placeholder="Choose Username">
+<input id="regPassword" type="password" placeholder="Choose Password">
+<div class="toggle" onclick="togglePassword('regPassword')">Show/Hide Password</div>
+<div class="error" id="regError"></div>
+<button onclick="register()">Register & Start</button>
+<p onclick="showLogin()" style="cursor:pointer;color:#00c6ff">Already have account? Login</p>
+</div>
+
+<div class="card hidden" id="levelPage">
+<h2>Select Level</h2>
+<button onclick="startQuiz('easy')">Easy</button>
+<button onclick="startQuiz('medium')">Medium</button>
+<button onclick="startQuiz('hard')">Hard</button>
+<button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="card hidden" id="quizPage">
+<div id="timer"></div>
+<h3 id="question"></h3>
+<div id="options"></div>
+</div>
+
+<div class="card hidden" id="resultPage">
+<h2 id="result"></h2>
+<button onclick="showLeaderboard()">View Leaderboard</button>
+<div id="leaderboard"></div>
+<button onclick="location.reload()">Play Again</button>
+</div>
+
+<script>
+const quizLevels={
+ easy:[
+ {q:"2+2?",o:["3","4","5","6"],a:"4"},
+ {q:"Sky color?",o:["Blue","Red","Green","Black"],a:"Blue"},
+ {q:"5+3?",o:["7","8","6","9"],a:"8"},
+ {q:"Water color?",o:["Blue","Green","Red","Black"],a:"Blue"},
+ {q:"1+9?",o:["10","11","9","8"],a:"10"}
+ ],
+ medium:[
+ {q:"Capital of India?",o:["Delhi","Mumbai","Chennai","Kolkata"],a:"Delhi"},
+ {q:"5*5?",o:["25","20","15","10"],a:"25"},
+ {q:"HTML stands for?",o:["Hyper Text Markup Language","Tool","None","Text"],a:"Hyper Text Markup Language"},
+ {q:"Square of 12?",o:["144","124","134","154"],a:"144"},
+ {q:"CSS used for?",o:["Styling","Logic","DB","Server"],a:"Styling"}
+ ],
+ hard:[
+ {q:"Binary of 5?",o:["101","111","100","110"],a:"101"},
+ {q:"15^2?",o:["225","250","200","215"],a:"225"},
+ {q:"2^5?",o:["32","16","64","48"],a:"32"},
+ {q:"Prime number?",o:["9","15","11","21"],a:"11"},
+ {q:"Speed of light unit?",o:["m/s","km","kg","amp"],a:"m/s"}
+ ]
+};
+
+let user="",quizData=[],current=0,score=0,time=15,timer;
+let leaderboardData=[];
+
+window.onload=function(){
+ const savedUser=localStorage.getItem('currentUser');
+ if(savedUser){user=savedUser;loginPage.classList.add('hidden');levelPage.classList.remove('hidden');}
+}
+
+function togglePassword(id){
+ const input=document.getElementById(id);
+ input.type=input.type==='password'?'text':'password';
+}
+
+function showRegister(){loginPage.classList.add('hidden');registerPage.classList.remove('hidden')}
+function showLogin(){registerPage.classList.add('hidden');loginPage.classList.remove('hidden')}
+
+function register(){
+ const u=regUsername.value.trim();
+ const p=regPassword.value.trim();
+ if(!u||!p){regError.innerText='All fields required';return}
+ if(localStorage.getItem(u)){regError.innerText='Username already exists';return}
+ localStorage.setItem(u,p);
+ localStorage.setItem('currentUser',u);
+ user=u;
+ registerPage.classList.add('hidden');
+ levelPage.classList.remove('hidden');
+}
+
+function login(){
+ const u=loginUsername.value.trim();
+ const p=loginPassword.value.trim();
+ if(localStorage.getItem(u)===p){
+ user=u;
+ localStorage.setItem('currentUser',u);
+ loginPage.classList.add('hidden');
+ levelPage.classList.remove('hidden');
+ }else{loginError.innerText='Invalid username or password'}
+}
+
+function logout(){localStorage.removeItem('currentUser');location.reload()}
+
+function startQuiz(level){
+ quizData=quizLevels[level];current=0;score=0;
+ if(level==='easy')time=15;else if(level==='medium')time=12;else time=10;
+ levelPage.classList.add('hidden');quizPage.classList.remove('hidden');loadQ()
+}
+
+function loadQ(){
+ if(current>=quizData.length)return showResult();
+ let q=quizData[current];
+ question.innerText=q.q;
+ options.innerHTML='';
+ q.o.forEach(op=>{
+ let d=document.createElement('div');
+ d.className='option';
+ d.innerText=op;
+ d.onclick=()=>ans(op);
+ options.appendChild(d);
+ });
+ startTimer();
+}
+
+function startTimer(){
+ clearInterval(timer);
+ let currentTime=time;
+ updateTimer(currentTime);
+ timer=setInterval(()=>{
+ currentTime--;
+ updateTimer(currentTime);
+ if(currentTime<=0){clearInterval(timer);next()}
+ },1000);
+}
+
+function updateTimer(t){document.getElementById('timer').innerText='Time: '+t}
+
+function ans(a){clearInterval(timer);if(a===quizData[current].a)score++;next()}
+function next(){current++;loadQ()}
+
+function showResult(){
+ quizPage.classList.add('hidden');
+ resultPage.classList.remove('hidden');
+ result.innerText=`${user}\nScore: ${score}`;
+ leaderboardData.push({name:user,score:score});
+}
+
+function showLeaderboard(){
+ let sorted=[...leaderboardData].sort((a,b)=>b.score-a.score);
+ let html='<h3>🏆 Leaderboard</h3>';
+ sorted.forEach((p,i)=>{html+=`${i+1}. ${p.name} - ${p.score}<br>`});
+ document.getElementById('leaderboard').innerHTML=html;
+}
+</script>
+
+</body>
+</html>
