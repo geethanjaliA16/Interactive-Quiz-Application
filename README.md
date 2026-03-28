@@ -12,7 +12,7 @@
 
 *Mentor*: Neela Santhosh
 
-## A Simple and Engaging Quiz Appbuilt using HTML,CSS,and JAVASCRIPT.
+## A Simple and Engaging Quiz App built using HTML,CSS,and JAVASCRIPT.
 
 # Output: 
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/3d9a92dc-e3f7-498d-bf2f-7cd4c8888be6" />
